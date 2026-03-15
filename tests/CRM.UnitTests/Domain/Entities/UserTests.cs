@@ -167,6 +167,63 @@ public class UserTests
     }
 
     [Fact]
+    public void UpdateEmail_WithValidEmail_UpdatesEmailAndTimestamp()
+    {
+        // Arrange
+        var user = User.Create("John", "Doe", "john@test.com", "hash");
+
+        // Act
+        user.UpdateEmail("new@test.com");
+
+        // Assert
+        user.Email.Should().Be("new@test.com");
+        user.LastModifiedAt.Should().NotBeNull();
+        user.LastModifiedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public void UpdateEmail_WithNullEmail_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var user = User.Create("John", "Doe", "john@test.com", "hash");
+
+        // Act
+        var act = () => user.UpdateEmail(null!);
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>()
+            .And.ParamName.Should().Be("email");
+    }
+
+    [Fact]
+    public void ChangeRole_ToAdmin_UpdatesRoleAndTimestamp()
+    {
+        // Arrange
+        var user = User.Create("John", "Doe", "john@test.com", "hash");
+
+        // Act
+        user.ChangeRole(UserRole.Admin);
+
+        // Assert
+        user.Role.Should().Be(UserRole.Admin);
+        user.LastModifiedAt.Should().NotBeNull();
+        user.LastModifiedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public void ChangeRole_ToManager_UpdatesRoleCorrectly()
+    {
+        // Arrange
+        var user = User.Create("John", "Doe", "john@test.com", "hash", UserRole.Admin);
+
+        // Act
+        user.ChangeRole(UserRole.Manager);
+
+        // Assert
+        user.Role.Should().Be(UserRole.Manager);
+    }
+
+    [Fact]
     public void AuditableEntity_Properties_CanBeSetAndRead()
     {
         // Arrange

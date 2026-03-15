@@ -35,6 +35,12 @@ public class User : AuditableEntity
         LastModifiedAt = DateTime.UtcNow;
     }
 
+    public void UpdateEmail(string email)
+    {
+        Email = email ?? throw new ArgumentNullException(nameof(email));
+        LastModifiedAt = DateTime.UtcNow;
+    }
+
     public void Deactivate()
     {
         IsActive = false;
@@ -44,6 +50,12 @@ public class User : AuditableEntity
     public void Activate()
     {
         IsActive = true;
+        LastModifiedAt = DateTime.UtcNow;
+    }
+
+    public void ChangeRole(UserRole newRole)
+    {
+        Role = newRole;
         LastModifiedAt = DateTime.UtcNow;
     }
 

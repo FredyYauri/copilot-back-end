@@ -35,6 +35,31 @@ public sealed class UserRepository(IDbConnectionFactory connectionFactory) : IUs
         return count > 0;
     }
 
+    public async Task<IEnumerable<User>> GetAllAsync(int page, int pageSize, CancellationToken ct = default)
+    {
+        using var connection = connectionFactory.CreateConnection();
+        return await connection.QueryAsync<User>(
+            "sp_Users_GetAll",
+            new { Page = page, PageSize = pageSize },
+            commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<int> GetTotalCountAsync(CancellationToken ct = default)
+    {
+        using var connection = connectionFactory.CreateConnection();
+        return await connection.ExecuteScalarAsync<int>(
+            "sp_Users_GetTotalCount",
+            commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<int> GetActiveAdminCountAsync(CancellationToken ct = default)
+    {
+        using var connection = connectionFactory.CreateConnection();
+        return await connection.ExecuteScalarAsync<int>(
+            "sp_Users_GetActiveAdminCount",
+            commandType: CommandType.StoredProcedure);
+    }
+
     public async Task<Guid> InsertAsync(User user, CancellationToken ct = default)
     {
         using var connection = connectionFactory.CreateConnection();

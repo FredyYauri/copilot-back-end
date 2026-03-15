@@ -51,5 +51,11 @@ var script3 = File.ReadAllText(Path.Combine(scriptDir, "03-create-stored-procedu
 ExecuteBatches(crmConn, script3);
 Console.WriteLine("   OK");
 
+// Step 4: Create user management stored procedures
+Console.WriteLine("4. Creating user management stored procedures...");
+var script4 = File.ReadAllText(Path.Combine(scriptDir, "04-create-user-management-procedures.sql"));
+ExecuteBatches(crmConn, script4);
+Console.WriteLine("   OK");
+
 Console.WriteLine("\nDatabase CRM_DB setup completed successfully!");
 Console.WriteLine("Connection: (localdb)\\MSSQLLocalDB");
