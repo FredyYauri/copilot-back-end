@@ -5,5 +5,5 @@ namespace CRM.Application.Features.Users.Commands.ChangeUserRole;
 
 public sealed record ChangeUserRoleCommand(
     Guid Id,
-    string Role
+    Guid RoleId
 ) : IRequest<Result<bool>>;

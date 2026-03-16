@@ -23,7 +23,8 @@ public sealed class GetUserByIdQueryHandler(
             FirstName: user.FirstName,
             LastName: user.LastName,
             Email: user.Email,
-            Role: user.Role.ToString(),
+            RoleId: user.RoleId.ToString(),
+            Role: user.RoleName,
             IsActive: user.IsActive,
             CreatedAt: user.CreatedAt,
             LastModifiedAt: user.LastModifiedAt

@@ -23,9 +23,7 @@ public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCom
             .NotEmpty().WithMessage("La contraseña es obligatoria.")
             .MinimumLength(8).WithMessage("La contraseña debe tener al menos 8 caracteres.");
 
-        RuleFor(x => x.Role)
-            .NotEmpty().WithMessage("El rol es obligatorio.")
-            .Must(role => role is "User" or "Admin" or "Manager")
-            .WithMessage("El rol debe ser User, Admin o Manager.");
+        RuleFor(x => x.RoleId)
+            .NotEmpty().WithMessage("El rol es obligatorio.");
     }
 }

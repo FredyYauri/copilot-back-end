@@ -1,6 +1,5 @@
 using CRM.Application.Features.Users.Queries.GetUserById;
 using CRM.Domain.Entities;
-using CRM.Domain.Enums;
 using CRM.Domain.Interfaces;
 using FluentAssertions;
 using NSubstitute;
@@ -9,6 +8,9 @@ namespace CRM.UnitTests.Application.Features.Users.Queries.GetUserById;
 
 public class GetUserByIdQueryHandlerTests
 {
+    private static readonly Guid AdminRoleId = Guid.NewGuid();
+    private static readonly Guid DefaultRoleId = Guid.NewGuid();
+
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly GetUserByIdQueryHandler _sut;
 
@@ -21,7 +23,7 @@ public class GetUserByIdQueryHandlerTests
     public async Task Handle_UserExists_ReturnsSuccessWithDto()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash", UserRole.Admin);
+        var user = TestUserHelper.CreateWithRole("John", "Doe", "john@test.com", "hash", AdminRoleId, "Administrador");
         var query = new GetUserByIdQuery(user.Id);
 
         _userRepository.GetByIdAsync(user.Id, Arg.Any<CancellationToken>()).Returns(user);
@@ -36,7 +38,7 @@ public class GetUserByIdQueryHandlerTests
         result.Value.FirstName.Should().Be("John");
         result.Value.LastName.Should().Be("Doe");
         result.Value.Email.Should().Be("john@test.com");
-        result.Value.Role.Should().Be("Admin");
+        result.Value.Role.Should().Be("Administrador");
         result.Value.IsActive.Should().BeTrue();
     }
 
@@ -59,7 +61,7 @@ public class GetUserByIdQueryHandlerTests
     public async Task Handle_InactiveUser_ReturnsIsActiveFalse()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash");
+        var user = TestUserHelper.CreateWithRole("John", "Doe", "john@test.com", "hash", DefaultRoleId, "Vendedor");
         user.Deactivate();
         var query = new GetUserByIdQuery(user.Id);
 

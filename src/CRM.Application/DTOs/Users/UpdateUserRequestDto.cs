@@ -4,6 +4,6 @@ public sealed record UpdateUserRequestDto(
     string FirstName,
     string LastName,
     string Email,
-    string Role,
+    Guid RoleId,
     bool IsActive
 );

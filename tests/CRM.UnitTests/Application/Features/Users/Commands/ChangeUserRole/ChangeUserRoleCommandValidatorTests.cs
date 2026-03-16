@@ -10,7 +10,7 @@ public class ChangeUserRoleCommandValidatorTests
     [Fact]
     public void Validate_WithValidCommand_ShouldNotHaveErrors()
     {
-        var command = new ChangeUserRoleCommand(Guid.NewGuid(), "Admin");
+        var command = new ChangeUserRoleCommand(Guid.NewGuid(), Guid.NewGuid());
         var result = _validator.TestValidate(command);
         result.ShouldNotHaveAnyValidationErrors();
     }
@@ -18,30 +18,24 @@ public class ChangeUserRoleCommandValidatorTests
     [Fact]
     public void Validate_WithEmptyId_ShouldHaveError()
     {
-        var command = new ChangeUserRoleCommand(Guid.Empty, "Admin");
+        var command = new ChangeUserRoleCommand(Guid.Empty, Guid.NewGuid());
         var result = _validator.TestValidate(command);
         result.ShouldHaveValidationErrorFor(x => x.Id);
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("SuperAdmin")]
-    [InlineData("invalid")]
-    public void Validate_WithInvalidRole_ShouldHaveError(string role)
+    [Fact]
+    public void Validate_WithEmptyRoleId_ShouldHaveError()
     {
-        var command = new ChangeUserRoleCommand(Guid.NewGuid(), role);
+        var command = new ChangeUserRoleCommand(Guid.NewGuid(), Guid.Empty);
         var result = _validator.TestValidate(command);
-        result.ShouldHaveValidationErrorFor(x => x.Role);
+        result.ShouldHaveValidationErrorFor(x => x.RoleId);
     }
 
-    [Theory]
-    [InlineData("User")]
-    [InlineData("Admin")]
-    [InlineData("Manager")]
-    public void Validate_WithValidRole_ShouldNotHaveError(string role)
+    [Fact]
+    public void Validate_WithValidRoleId_ShouldNotHaveError()
     {
-        var command = new ChangeUserRoleCommand(Guid.NewGuid(), role);
+        var command = new ChangeUserRoleCommand(Guid.NewGuid(), Guid.NewGuid());
         var result = _validator.TestValidate(command);
-        result.ShouldNotHaveValidationErrorFor(x => x.Role);
+        result.ShouldNotHaveValidationErrorFor(x => x.RoleId);
     }
 }

@@ -1,6 +1,5 @@
 using CRM.Application.Features.Users.Queries.GetUsers;
 using CRM.Domain.Entities;
-using CRM.Domain.Enums;
 using CRM.Domain.Interfaces;
 using FluentAssertions;
 using NSubstitute;
@@ -9,6 +8,9 @@ namespace CRM.UnitTests.Application.Features.Users.Queries.GetUsers;
 
 public class GetUsersQueryHandlerTests
 {
+    private static readonly Guid AdminRoleId = Guid.NewGuid();
+    private static readonly Guid UserRoleId = Guid.NewGuid();
+
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly GetUsersQueryHandler _sut;
 
@@ -23,8 +25,8 @@ public class GetUsersQueryHandlerTests
         // Arrange
         var users = new[]
         {
-            User.Create("John", "Doe", "john@test.com", "hash", UserRole.Admin),
-            User.Create("Jane", "Smith", "jane@test.com", "hash", UserRole.User)
+            TestUserHelper.CreateWithRole("John", "Doe", "john@test.com", "hash", AdminRoleId, "Administrador"),
+            TestUserHelper.CreateWithRole("Jane", "Smith", "jane@test.com", "hash", UserRoleId, "Vendedor")
         };
         var query = new GetUsersQuery(1, 10);
 
@@ -45,7 +47,7 @@ public class GetUsersQueryHandlerTests
     public async Task Handle_MapsUserToDto_Correctly()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash", UserRole.Admin);
+        var user = TestUserHelper.CreateWithRole("John", "Doe", "john@test.com", "hash", AdminRoleId, "Administrador");
         var query = new GetUsersQuery(1, 10);
 
         _userRepository.GetAllAsync(1, 10, Arg.Any<CancellationToken>()).Returns(new[] { user });
@@ -60,7 +62,7 @@ public class GetUsersQueryHandlerTests
         dto.FirstName.Should().Be("John");
         dto.LastName.Should().Be("Doe");
         dto.Email.Should().Be("john@test.com");
-        dto.Role.Should().Be("Admin");
+        dto.Role.Should().Be("Administrador");
         dto.IsActive.Should().BeTrue();
     }
 

@@ -1,5 +1,4 @@
 using CRM.Application.Common.Models;
-using CRM.Domain.Enums;
 using CRM.Domain.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -8,6 +7,7 @@ namespace CRM.Application.Features.Users.Commands.ChangeUserRole;
 
 public sealed class ChangeUserRoleCommandHandler(
     IUserRepository userRepository,
+    IRoleRepository roleRepository,
     ILogger<ChangeUserRoleCommandHandler> logger
 ) : IRequestHandler<ChangeUserRoleCommand, Result<bool>>
 {
@@ -19,12 +19,13 @@ public sealed class ChangeUserRoleCommandHandler(
             return Result<bool>.Failure("El usuario no fue encontrado.");
         }
 
-        if (!Enum.TryParse<UserRole>(request.Role, out var newRole))
+        var newRole = await roleRepository.GetByIdAsync(request.RoleId, cancellationToken);
+        if (newRole is null)
         {
-            return Result<bool>.Failure("El rol especificado no es válido.");
+            return Result<bool>.Failure("El rol especificado no existe.");
         }
 
-        if (user.Role == UserRole.Admin && newRole != UserRole.Admin)
+        if (string.Equals(user.RoleName, "Administrador", StringComparison.OrdinalIgnoreCase) && !string.Equals(newRole.Name, "Administrador", StringComparison.OrdinalIgnoreCase))
         {
             var adminCount = await userRepository.GetActiveAdminCountAsync(cancellationToken);
             if (adminCount <= 1)
@@ -33,10 +34,10 @@ public sealed class ChangeUserRoleCommandHandler(
             }
         }
 
-        user.ChangeRole(newRole);
+        user.ChangeRole(request.RoleId);
         await userRepository.UpdateAsync(user, cancellationToken);
 
-        logger.LogInformation("User {UserId} role changed to {Role}", request.Id, request.Role);
+        logger.LogInformation("User {UserId} role changed to {RoleName}", request.Id, newRole.Name);
 
         return Result<bool>.Success(true);
     }

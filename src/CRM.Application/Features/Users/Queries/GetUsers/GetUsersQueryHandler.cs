@@ -19,7 +19,8 @@ public sealed class GetUsersQueryHandler(
             FirstName: u.FirstName,
             LastName: u.LastName,
             Email: u.Email,
-            Role: u.Role.ToString(),
+            RoleId: u.RoleId.ToString(),
+            Role: u.RoleName,
             IsActive: u.IsActive,
             CreatedAt: u.CreatedAt,
             LastModifiedAt: u.LastModifiedAt

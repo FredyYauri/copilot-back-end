@@ -44,7 +44,7 @@ public sealed class LoginCommandHandler(
             Email: user.Email,
             FirstName: user.FirstName,
             LastName: user.LastName,
-            Role: user.Role.ToString()
+            Role: user.RoleName
         );
 
         logger.LogInformation("User {UserId} logged in successfully", user.Id);

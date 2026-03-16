@@ -3,7 +3,6 @@ using CRM.Application.Common.Models;
 using CRM.Application.DTOs.Auth;
 using CRM.Application.Features.Auth.Commands.Login;
 using CRM.Domain.Entities;
-using CRM.Domain.Enums;
 using CRM.Domain.Interfaces;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -13,6 +12,9 @@ namespace CRM.UnitTests.Application.Features.Auth.Commands.Login;
 
 public class LoginCommandHandlerTests
 {
+    private static readonly Guid AdminRoleId = Guid.NewGuid();
+    private static readonly Guid DefaultRoleId = Guid.NewGuid();
+
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly IPasswordHasher _passwordHasher = Substitute.For<IPasswordHasher>();
     private readonly IJwtTokenGenerator _jwtTokenGenerator = Substitute.For<IJwtTokenGenerator>();
@@ -44,7 +46,7 @@ public class LoginCommandHandlerTests
     public async Task Handle_UserIsInactive_ReturnsFailureWithInactiveError()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hashedPwd");
+        var user = User.Create("John", "Doe", "john@test.com", "hashedPwd", DefaultRoleId);
         user.Deactivate();
 
         var command = new LoginCommand("john@test.com", "password123");
@@ -63,7 +65,7 @@ public class LoginCommandHandlerTests
     public async Task Handle_InvalidPassword_ReturnsFailureWithCredentialsError()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hashedPwd");
+        var user = User.Create("John", "Doe", "john@test.com", "hashedPwd", DefaultRoleId);
         var command = new LoginCommand("john@test.com", "wrongpassword");
 
         _userRepository.GetByEmailAsync(command.Email, Arg.Any<CancellationToken>())
@@ -83,7 +85,7 @@ public class LoginCommandHandlerTests
     public async Task Handle_ValidCredentials_ReturnsSuccessWithLoginResponse()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hashedPwd", UserRole.Admin);
+        var user = TestUserHelper.CreateWithRole("John", "Doe", "john@test.com", "hashedPwd", AdminRoleId, "Administrador");
         var command = new LoginCommand("john@test.com", "correctPassword");
 
         _userRepository.GetByEmailAsync(command.Email, Arg.Any<CancellationToken>())
@@ -107,7 +109,7 @@ public class LoginCommandHandlerTests
         result.Value.User.Email.Should().Be("john@test.com");
         result.Value.User.FirstName.Should().Be("John");
         result.Value.User.LastName.Should().Be("Doe");
-        result.Value.User.Role.Should().Be("Admin");
+        result.Value.User.Role.Should().Be("Administrador");
         result.Value.User.Id.Should().Be(user.Id.ToString());
     }
 }

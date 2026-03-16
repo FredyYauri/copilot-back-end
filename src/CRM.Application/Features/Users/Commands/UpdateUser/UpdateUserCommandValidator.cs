@@ -22,9 +22,7 @@ public sealed class UpdateUserCommandValidator : AbstractValidator<UpdateUserCom
             .EmailAddress().WithMessage("El formato del correo electrónico es inválido.")
             .MaximumLength(256).WithMessage("El correo no debe superar los 256 caracteres.");
 
-        RuleFor(x => x.Role)
-            .NotEmpty().WithMessage("El rol es obligatorio.")
-            .Must(role => role is "User" or "Admin" or "Manager")
-            .WithMessage("El rol debe ser User, Admin o Manager.");
+        RuleFor(x => x.RoleId)
+            .NotEmpty().WithMessage("El rol es obligatorio.");
     }
 }

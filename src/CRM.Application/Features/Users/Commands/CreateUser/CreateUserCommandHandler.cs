@@ -1,7 +1,6 @@
 using CRM.Application.Common.Interfaces;
 using CRM.Application.Common.Models;
 using CRM.Domain.Entities;
-using CRM.Domain.Enums;
 using CRM.Domain.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -10,6 +9,7 @@ namespace CRM.Application.Features.Users.Commands.CreateUser;
 
 public sealed class CreateUserCommandHandler(
     IUserRepository userRepository,
+    IRoleRepository roleRepository,
     IPasswordHasher passwordHasher,
     ILogger<CreateUserCommandHandler> logger
 ) : IRequestHandler<CreateUserCommand, Result<Guid>>
@@ -23,9 +23,10 @@ public sealed class CreateUserCommandHandler(
             return Result<Guid>.Failure("Ya existe un usuario con ese correo electrónico.");
         }
 
-        if (!Enum.TryParse<UserRole>(request.Role, out var role))
+        var role = await roleRepository.GetByIdAsync(request.RoleId, cancellationToken);
+        if (role is null)
         {
-            return Result<Guid>.Failure("El rol especificado no es válido.");
+            return Result<Guid>.Failure("El rol especificado no existe.");
         }
 
         var hashedPassword = passwordHasher.Hash(request.Password);
@@ -35,12 +36,12 @@ public sealed class CreateUserCommandHandler(
             request.LastName,
             request.Email,
             hashedPassword,
-            role
+            request.RoleId
         );
 
         var userId = await userRepository.InsertAsync(user, cancellationToken);
 
-        logger.LogInformation("User {UserId} created successfully with role {Role}", userId, request.Role);
+        logger.LogInformation("User {UserId} created successfully with role {RoleName}", userId, role.Name);
 
         return Result<Guid>.Success(userId);
     }

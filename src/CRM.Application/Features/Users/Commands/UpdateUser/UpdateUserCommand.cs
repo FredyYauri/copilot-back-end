@@ -8,6 +8,6 @@ public sealed record UpdateUserCommand(
     string FirstName,
     string LastName,
     string Email,
-    string Role,
+    Guid RoleId,
     bool IsActive
 ) : IRequest<Result<bool>>;

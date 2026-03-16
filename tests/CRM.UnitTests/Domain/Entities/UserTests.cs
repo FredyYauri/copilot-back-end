@@ -1,16 +1,19 @@
 using CRM.Domain.Entities;
-using CRM.Domain.Enums;
 using FluentAssertions;
 
 namespace CRM.UnitTests.Domain.Entities;
 
 public class UserTests
 {
+    private static readonly Guid DefaultRoleId = Guid.NewGuid();
+    private static readonly Guid AdminRoleId = Guid.NewGuid();
+    private static readonly Guid ManagerRoleId = Guid.NewGuid();
+
     [Fact]
     public void Create_WithValidData_SetsAllPropertiesCorrectly()
     {
         // Arrange & Act
-        var user = User.Create("John", "Doe", "john@example.com", "hashedPwd123");
+        var user = User.Create("John", "Doe", "john@example.com", "hashedPwd123", DefaultRoleId);
 
         // Assert
         user.Id.Should().NotBeEmpty();
@@ -18,36 +21,36 @@ public class UserTests
         user.LastName.Should().Be("Doe");
         user.Email.Should().Be("john@example.com");
         user.PasswordHash.Should().Be("hashedPwd123");
-        user.Role.Should().Be(UserRole.User);
+        user.RoleId.Should().Be(DefaultRoleId);
         user.IsActive.Should().BeTrue();
         user.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }
 
     [Fact]
-    public void Create_WithAdminRole_SetsRoleToAdmin()
+    public void Create_WithAdminRole_SetsRoleId()
     {
         // Act
-        var user = User.Create("Admin", "User", "admin@test.com", "hash", UserRole.Admin);
+        var user = User.Create("Admin", "User", "admin@test.com", "hash", AdminRoleId);
 
         // Assert
-        user.Role.Should().Be(UserRole.Admin);
+        user.RoleId.Should().Be(AdminRoleId);
     }
 
     [Fact]
-    public void Create_WithManagerRole_SetsRoleToManager()
+    public void Create_WithManagerRole_SetsRoleId()
     {
         // Act
-        var user = User.Create("Manager", "User", "mgr@test.com", "hash", UserRole.Manager);
+        var user = User.Create("Manager", "User", "mgr@test.com", "hash", ManagerRoleId);
 
         // Assert
-        user.Role.Should().Be(UserRole.Manager);
+        user.RoleId.Should().Be(ManagerRoleId);
     }
 
     [Fact]
     public void Create_WithNullFirstName_ThrowsArgumentNullException()
     {
         // Act
-        var act = () => User.Create(null!, "Doe", "john@test.com", "hash");
+        var act = () => User.Create(null!, "Doe", "john@test.com", "hash", DefaultRoleId);
 
         // Assert
         act.Should().Throw<ArgumentNullException>()
@@ -58,7 +61,7 @@ public class UserTests
     public void Create_WithNullLastName_ThrowsArgumentNullException()
     {
         // Act
-        var act = () => User.Create("John", null!, "john@test.com", "hash");
+        var act = () => User.Create("John", null!, "john@test.com", "hash", DefaultRoleId);
 
         // Assert
         act.Should().Throw<ArgumentNullException>()
@@ -69,7 +72,7 @@ public class UserTests
     public void Create_WithNullEmail_ThrowsArgumentNullException()
     {
         // Act
-        var act = () => User.Create("John", "Doe", null!, "hash");
+        var act = () => User.Create("John", "Doe", null!, "hash", DefaultRoleId);
 
         // Assert
         act.Should().Throw<ArgumentNullException>()
@@ -80,7 +83,7 @@ public class UserTests
     public void UpdateProfile_WithValidData_UpdatesNameAndTimestamp()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash");
+        var user = User.Create("John", "Doe", "john@test.com", "hash", DefaultRoleId);
 
         // Act
         user.UpdateProfile("Jane", "Smith");
@@ -96,7 +99,7 @@ public class UserTests
     public void UpdateProfile_WithNullFirstName_ThrowsArgumentNullException()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash");
+        var user = User.Create("John", "Doe", "john@test.com", "hash", DefaultRoleId);
 
         // Act
         var act = () => user.UpdateProfile(null!, "Smith");
@@ -110,7 +113,7 @@ public class UserTests
     public void UpdateProfile_WithNullLastName_ThrowsArgumentNullException()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash");
+        var user = User.Create("John", "Doe", "john@test.com", "hash", DefaultRoleId);
 
         // Act
         var act = () => user.UpdateProfile("Jane", null!);
@@ -124,7 +127,7 @@ public class UserTests
     public void Deactivate_WhenActive_SetsIsActiveFalseAndUpdatesTimestamp()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash");
+        var user = User.Create("John", "Doe", "john@test.com", "hash", DefaultRoleId);
 
         // Act
         user.Deactivate();
@@ -139,7 +142,7 @@ public class UserTests
     public void Activate_WhenInactive_SetsIsActiveTrueAndUpdatesTimestamp()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash");
+        var user = User.Create("John", "Doe", "john@test.com", "hash", DefaultRoleId);
         user.Deactivate();
 
         // Act
@@ -155,7 +158,7 @@ public class UserTests
     public void UpdatePasswordHash_WithNewHash_UpdatesHashAndTimestamp()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "oldHash");
+        var user = User.Create("John", "Doe", "john@test.com", "oldHash", DefaultRoleId);
 
         // Act
         user.UpdatePasswordHash("newHash");
@@ -170,7 +173,7 @@ public class UserTests
     public void UpdateEmail_WithValidEmail_UpdatesEmailAndTimestamp()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash");
+        var user = User.Create("John", "Doe", "john@test.com", "hash", DefaultRoleId);
 
         // Act
         user.UpdateEmail("new@test.com");
@@ -185,7 +188,7 @@ public class UserTests
     public void UpdateEmail_WithNullEmail_ThrowsArgumentNullException()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash");
+        var user = User.Create("John", "Doe", "john@test.com", "hash", DefaultRoleId);
 
         // Act
         var act = () => user.UpdateEmail(null!);
@@ -196,38 +199,38 @@ public class UserTests
     }
 
     [Fact]
-    public void ChangeRole_ToAdmin_UpdatesRoleAndTimestamp()
+    public void ChangeRole_UpdatesRoleIdAndTimestamp()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash");
+        var user = User.Create("John", "Doe", "john@test.com", "hash", DefaultRoleId);
 
         // Act
-        user.ChangeRole(UserRole.Admin);
+        user.ChangeRole(AdminRoleId);
 
         // Assert
-        user.Role.Should().Be(UserRole.Admin);
+        user.RoleId.Should().Be(AdminRoleId);
         user.LastModifiedAt.Should().NotBeNull();
         user.LastModifiedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }
 
     [Fact]
-    public void ChangeRole_ToManager_UpdatesRoleCorrectly()
+    public void ChangeRole_ToDifferentRole_UpdatesRoleIdCorrectly()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash", UserRole.Admin);
+        var user = User.Create("John", "Doe", "john@test.com", "hash", AdminRoleId);
 
         // Act
-        user.ChangeRole(UserRole.Manager);
+        user.ChangeRole(ManagerRoleId);
 
         // Assert
-        user.Role.Should().Be(UserRole.Manager);
+        user.RoleId.Should().Be(ManagerRoleId);
     }
 
     [Fact]
     public void AuditableEntity_Properties_CanBeSetAndRead()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash");
+        var user = User.Create("John", "Doe", "john@test.com", "hash", DefaultRoleId);
 
         // Act
         user.CreatedBy = "system";

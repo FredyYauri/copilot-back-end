@@ -37,7 +37,7 @@ public class ForgotPasswordCommandHandlerTests
     public async Task Handle_UserExists_ReturnsTrueAndLogsAction()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash");
+        var user = User.Create("John", "Doe", "john@test.com", "hash", Guid.NewGuid());
         var command = new ForgotPasswordCommand("john@test.com");
 
         _userRepository.GetByEmailAsync(command.Email, Arg.Any<CancellationToken>())

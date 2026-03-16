@@ -47,7 +47,7 @@ public class UsersControllerTests
     public async Task GetById_UserExists_ReturnsOkWithUser()
     {
         // Arrange
-        var dto = new UserManagementDto("id", "John", "Doe", "john@test.com", "User", true, DateTime.UtcNow, null);
+        var dto = new UserManagementDto("id", "John", "Doe", "john@test.com", Guid.NewGuid().ToString(), "User", true, DateTime.UtcNow, null);
         var successResult = Result<UserManagementDto>.Success(dto);
 
         _sender.Send(Arg.Any<GetUserByIdQuery>(), Arg.Any<CancellationToken>())
@@ -89,7 +89,7 @@ public class UsersControllerTests
         _sender.Send(Arg.Any<CreateUserCommand>(), Arg.Any<CancellationToken>())
             .Returns(successResult);
 
-        var request = new CreateUserRequestDto("John", "Doe", "john@test.com", "Password123!", "User");
+        var request = new CreateUserRequestDto("John", "Doe", "john@test.com", "Password123!", Guid.NewGuid());
 
         // Act
         var result = await _sut.Create(request, CancellationToken.None);
@@ -109,7 +109,7 @@ public class UsersControllerTests
         _sender.Send(Arg.Any<CreateUserCommand>(), Arg.Any<CancellationToken>())
             .Returns(failureResult);
 
-        var request = new CreateUserRequestDto("John", "Doe", "existing@test.com", "Password123!", "User");
+        var request = new CreateUserRequestDto("John", "Doe", "existing@test.com", "Password123!", Guid.NewGuid());
 
         // Act
         var result = await _sut.Create(request, CancellationToken.None);
@@ -129,7 +129,7 @@ public class UsersControllerTests
         _sender.Send(Arg.Any<UpdateUserCommand>(), Arg.Any<CancellationToken>())
             .Returns(successResult);
 
-        var request = new UpdateUserRequestDto("Jane", "Smith", "jane@test.com", "User", true);
+        var request = new UpdateUserRequestDto("Jane", "Smith", "jane@test.com", Guid.NewGuid(), true);
 
         // Act
         var result = await _sut.Update(Guid.NewGuid(), request, CancellationToken.None);
@@ -147,7 +147,7 @@ public class UsersControllerTests
         _sender.Send(Arg.Any<UpdateUserCommand>(), Arg.Any<CancellationToken>())
             .Returns(failureResult);
 
-        var request = new UpdateUserRequestDto("Jane", "Smith", "jane@test.com", "User", true);
+        var request = new UpdateUserRequestDto("Jane", "Smith", "jane@test.com", Guid.NewGuid(), true);
 
         // Act
         var result = await _sut.Update(Guid.NewGuid(), request, CancellationToken.None);
@@ -198,7 +198,7 @@ public class UsersControllerTests
             .Returns(successResult);
 
         // Act
-        var result = await _sut.ChangeRole(Guid.NewGuid(), "Admin", CancellationToken.None);
+        var result = await _sut.ChangeRole(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
 
         // Assert
         result.Should().BeOfType<NoContentResult>();
@@ -214,7 +214,7 @@ public class UsersControllerTests
             .Returns(failureResult);
 
         // Act
-        var result = await _sut.ChangeRole(Guid.NewGuid(), "Invalid", CancellationToken.None);
+        var result = await _sut.ChangeRole(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
 
         // Assert
         result.Should().BeOfType<BadRequestObjectResult>();

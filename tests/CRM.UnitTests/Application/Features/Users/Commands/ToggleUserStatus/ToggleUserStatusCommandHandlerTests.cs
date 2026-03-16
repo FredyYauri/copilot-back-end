@@ -1,6 +1,5 @@
 using CRM.Application.Features.Users.Commands.ToggleUserStatus;
 using CRM.Domain.Entities;
-using CRM.Domain.Enums;
 using CRM.Domain.Interfaces;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -10,6 +9,9 @@ namespace CRM.UnitTests.Application.Features.Users.Commands.ToggleUserStatus;
 
 public class ToggleUserStatusCommandHandlerTests
 {
+    private static readonly Guid DefaultRoleId = Guid.NewGuid();
+    private static readonly Guid AdminRoleId = Guid.NewGuid();
+
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly ILogger<ToggleUserStatusCommandHandler> _logger = Substitute.For<ILogger<ToggleUserStatusCommandHandler>>();
     private readonly ToggleUserStatusCommandHandler _sut;
@@ -23,7 +25,7 @@ public class ToggleUserStatusCommandHandlerTests
     public async Task Handle_ActivateUser_ReturnsSuccessAndActivatesUser()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash");
+        var user = TestUserHelper.CreateWithRole("John", "Doe", "john@test.com", "hash", DefaultRoleId, "Vendedor");
         user.Deactivate();
         var command = new ToggleUserStatusCommand(user.Id, true);
 
@@ -42,7 +44,7 @@ public class ToggleUserStatusCommandHandlerTests
     public async Task Handle_DeactivateUser_ReturnsSuccessAndDeactivatesUser()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash");
+        var user = TestUserHelper.CreateWithRole("John", "Doe", "john@test.com", "hash", DefaultRoleId, "Vendedor");
         var command = new ToggleUserStatusCommand(user.Id, false);
 
         _userRepository.GetByIdAsync(user.Id, Arg.Any<CancellationToken>()).Returns(user);
@@ -74,7 +76,7 @@ public class ToggleUserStatusCommandHandlerTests
     public async Task Handle_DeactivateLastAdmin_ReturnsFailure()
     {
         // Arrange
-        var user = User.Create("Admin", "User", "admin@test.com", "hash", UserRole.Admin);
+        var user = TestUserHelper.CreateWithRole("Admin", "User", "admin@test.com", "hash", AdminRoleId, "Administrador");
         var command = new ToggleUserStatusCommand(user.Id, false);
 
         _userRepository.GetByIdAsync(user.Id, Arg.Any<CancellationToken>()).Returns(user);
@@ -92,7 +94,7 @@ public class ToggleUserStatusCommandHandlerTests
     public async Task Handle_DeactivateAdminWithMultipleAdmins_ReturnsSuccess()
     {
         // Arrange
-        var user = User.Create("Admin", "User", "admin@test.com", "hash", UserRole.Admin);
+        var user = TestUserHelper.CreateWithRole("Admin", "User", "admin@test.com", "hash", AdminRoleId, "Administrador");
         var command = new ToggleUserStatusCommand(user.Id, false);
 
         _userRepository.GetByIdAsync(user.Id, Arg.Any<CancellationToken>()).Returns(user);
@@ -110,7 +112,7 @@ public class ToggleUserStatusCommandHandlerTests
     public async Task Handle_DeactivateNonAdmin_DoesNotCheckAdminCount()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash");
+        var user = TestUserHelper.CreateWithRole("John", "Doe", "john@test.com", "hash", DefaultRoleId, "Vendedor");
         var command = new ToggleUserStatusCommand(user.Id, false);
 
         _userRepository.GetByIdAsync(user.Id, Arg.Any<CancellationToken>()).Returns(user);

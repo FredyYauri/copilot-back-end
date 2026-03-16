@@ -72,7 +72,7 @@ public sealed class UserRepository(IDbConnectionFactory connectionFactory) : IUs
                 user.LastName,
                 user.Email,
                 user.PasswordHash,
-                Role = user.Role.ToString(),
+                user.RoleId,
                 user.IsActive,
                 user.CreatedAt,
                 user.CreatedBy
@@ -92,7 +92,7 @@ public sealed class UserRepository(IDbConnectionFactory connectionFactory) : IUs
                 user.FirstName,
                 user.LastName,
                 user.Email,
-                Role = user.Role.ToString(),
+                user.RoleId,
                 user.IsActive,
                 user.LastModifiedAt,
                 user.LastModifiedBy

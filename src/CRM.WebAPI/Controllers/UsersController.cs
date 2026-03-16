@@ -6,6 +6,7 @@ using CRM.Application.Features.Users.Commands.ToggleUserStatus;
 using CRM.Application.Features.Users.Commands.UpdateUser;
 using CRM.Application.Features.Users.Queries.GetUserById;
 using CRM.Application.Features.Users.Queries.GetUsers;
+using CRM.WebAPI.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,13 +14,13 @@ using Microsoft.AspNetCore.Mvc;
 namespace CRM.WebAPI.Controllers;
 
 /// <summary>
-/// Controlador de gestión de usuarios. Solo accesible por administradores.
+/// Controlador de gestión de usuarios. Requiere autenticación y permisos específicos.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Tags("Users")]
 [Produces("application/json")]
-[Authorize(Roles = "Admin")]
+[Authorize]
 public class UsersController(ISender sender) : ControllerBase
 {
     /// <summary>
@@ -31,11 +32,12 @@ public class UsersController(ISender sender) : ControllerBase
     /// <returns>Lista paginada de usuarios.</returns>
     /// <response code="200">Lista de usuarios obtenida exitosamente.</response>
     /// <response code="401">No autenticado.</response>
-    /// <response code="403">No autorizado (requiere rol Admin).</response>
+    /// <response code="403">No autorizado.</response>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<UserManagementDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [TypeFilter(typeof(PermissionAuthorizationFilter), Arguments = new object[] { "users", "read" })]
     public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken ct = default)
     {
         var result = await sender.Send(new GetUsersQuery(page, pageSize), ct);
@@ -53,6 +55,7 @@ public class UsersController(ISender sender) : ControllerBase
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(UserManagementDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [TypeFilter(typeof(PermissionAuthorizationFilter), Arguments = new object[] { "users", "read" })]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
         var result = await sender.Send(new GetUserByIdQuery(id), ct);
@@ -81,6 +84,7 @@ public class UsersController(ISender sender) : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [TypeFilter(typeof(PermissionAuthorizationFilter), Arguments = new object[] { "users", "create" })]
     public async Task<IActionResult> Create([FromBody] CreateUserRequestDto request, CancellationToken ct)
     {
         var command = new CreateUserCommand(
@@ -88,7 +92,7 @@ public class UsersController(ISender sender) : ControllerBase
             request.LastName,
             request.Email,
             request.Password,
-            request.Role
+            request.RoleId
         );
 
         var result = await sender.Send(command, ct);
@@ -119,6 +123,7 @@ public class UsersController(ISender sender) : ControllerBase
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [TypeFilter(typeof(PermissionAuthorizationFilter), Arguments = new object[] { "users", "update" })]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserRequestDto request, CancellationToken ct)
     {
         var command = new UpdateUserCommand(
@@ -126,7 +131,7 @@ public class UsersController(ISender sender) : ControllerBase
             request.FirstName,
             request.LastName,
             request.Email,
-            request.Role,
+            request.RoleId,
             request.IsActive
         );
 
@@ -157,6 +162,7 @@ public class UsersController(ISender sender) : ControllerBase
     [HttpPatch("{id:guid}/status")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [TypeFilter(typeof(PermissionAuthorizationFilter), Arguments = new object[] { "users", "update" })]
     public async Task<IActionResult> ToggleStatus(Guid id, [FromBody] bool isActive, CancellationToken ct)
     {
         var result = await sender.Send(new ToggleUserStatusCommand(id, isActive), ct);
@@ -178,7 +184,7 @@ public class UsersController(ISender sender) : ControllerBase
     /// Cambia el rol de un usuario.
     /// </summary>
     /// <param name="id">Identificador del usuario.</param>
-    /// <param name="role">Nuevo rol del usuario.</param>
+    /// <param name="roleId">Identificador del nuevo rol.</param>
     /// <param name="ct">Token de cancelación.</param>
     /// <returns>Confirmación del cambio de rol.</returns>
     /// <response code="204">Rol actualizado exitosamente.</response>
@@ -186,9 +192,10 @@ public class UsersController(ISender sender) : ControllerBase
     [HttpPatch("{id:guid}/role")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> ChangeRole(Guid id, [FromBody] string role, CancellationToken ct)
+    [TypeFilter(typeof(PermissionAuthorizationFilter), Arguments = new object[] { "users", "update" })]
+    public async Task<IActionResult> ChangeRole(Guid id, [FromBody] Guid roleId, CancellationToken ct)
     {
-        var result = await sender.Send(new ChangeUserRoleCommand(id, role), ct);
+        var result = await sender.Send(new ChangeUserRoleCommand(id, roleId), ct);
 
         if (!result.IsSuccess)
         {

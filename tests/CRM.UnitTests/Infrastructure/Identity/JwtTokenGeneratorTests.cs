@@ -2,7 +2,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using CRM.Application.Common.Interfaces;
 using CRM.Domain.Entities;
-using CRM.Domain.Enums;
 using CRM.Infrastructure.Identity;
 using CRM.Infrastructure.Settings;
 using FluentAssertions;
@@ -12,6 +11,9 @@ namespace CRM.UnitTests.Infrastructure.Identity;
 
 public class JwtTokenGeneratorTests
 {
+    private static readonly Guid AdminRoleId = Guid.NewGuid();
+    private static readonly Guid DefaultRoleId = Guid.NewGuid();
+
     private readonly JwtSettings _jwtSettings = new()
     {
         SecretKey = "ThisIsASuperSecretKeyForTestingPurposesOnly1234567890!",
@@ -32,7 +34,7 @@ public class JwtTokenGeneratorTests
     public void GenerateAccessToken_WithValidUser_ReturnsNonEmptyToken()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash", UserRole.Admin);
+        var user = TestUserHelper.CreateWithRole("John", "Doe", "john@test.com", "hash", AdminRoleId, "Administrador");
 
         // Act
         var token = _sut.GenerateAccessToken(user);
@@ -45,7 +47,7 @@ public class JwtTokenGeneratorTests
     public void GenerateAccessToken_WithValidUser_TokenContainsCorrectClaims()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash", UserRole.Admin);
+        var user = TestUserHelper.CreateWithRole("John", "Doe", "john@test.com", "hash", AdminRoleId, "Administrador");
 
         // Act
         var token = _sut.GenerateAccessToken(user);
@@ -58,7 +60,7 @@ public class JwtTokenGeneratorTests
         jwtToken.Claims.Should().Contain(c => c.Type == JwtRegisteredClaimNames.Email && c.Value == "john@test.com");
         jwtToken.Claims.Should().Contain(c => c.Type == JwtRegisteredClaimNames.GivenName && c.Value == "John");
         jwtToken.Claims.Should().Contain(c => c.Type == JwtRegisteredClaimNames.FamilyName && c.Value == "Doe");
-        jwtToken.Claims.Should().Contain(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
+        jwtToken.Claims.Should().Contain(c => c.Type == ClaimTypes.Role && c.Value == "Administrador");
         jwtToken.Claims.Should().Contain(c => c.Type == JwtRegisteredClaimNames.Jti);
         jwtToken.Issuer.Should().Be("TestIssuer");
         jwtToken.Audiences.Should().Contain("TestAudience");
@@ -68,7 +70,7 @@ public class JwtTokenGeneratorTests
     public void GenerateAccessToken_WithValidUser_TokenHasCorrectExpiration()
     {
         // Arrange
-        var user = User.Create("John", "Doe", "john@test.com", "hash");
+        var user = TestUserHelper.CreateWithRole("John", "Doe", "john@test.com", "hash", DefaultRoleId, "Vendedor");
 
         // Act
         var token = _sut.GenerateAccessToken(user);

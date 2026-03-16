@@ -1,5 +1,4 @@
 using CRM.Application.Common.Models;
-using CRM.Domain.Enums;
 using CRM.Domain.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -19,7 +18,7 @@ public sealed class ToggleUserStatusCommandHandler(
             return Result<bool>.Failure("El usuario no fue encontrado.");
         }
 
-        if (!request.IsActive && user.Role == UserRole.Admin)
+        if (!request.IsActive && string.Equals(user.RoleName, "Administrador", StringComparison.OrdinalIgnoreCase))
         {
             var adminCount = await userRepository.GetActiveAdminCountAsync(cancellationToken);
             if (adminCount <= 1)

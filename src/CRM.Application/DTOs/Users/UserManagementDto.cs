@@ -5,6 +5,7 @@ public sealed record UserManagementDto(
     string FirstName,
     string LastName,
     string Email,
+    string RoleId,
     string Role,
     bool IsActive,
     DateTime CreatedAt,

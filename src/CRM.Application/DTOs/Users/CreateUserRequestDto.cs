@@ -5,5 +5,5 @@ public sealed record CreateUserRequestDto(
     string LastName,
     string Email,
     string Password,
-    string Role
+    Guid RoleId
 );

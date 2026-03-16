@@ -8,5 +8,5 @@ public sealed record CreateUserCommand(
     string LastName,
     string Email,
     string Password,
-    string Role
+    Guid RoleId
 ) : IRequest<Result<Guid>>;

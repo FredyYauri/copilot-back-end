@@ -1,7 +1,6 @@
 using CRM.Application.Common.Interfaces;
 using CRM.Application.Features.Users.Commands.CreateUser;
 using CRM.Domain.Entities;
-using CRM.Domain.Enums;
 using CRM.Domain.Interfaces;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -11,21 +10,32 @@ namespace CRM.UnitTests.Application.Features.Users.Commands.CreateUser;
 
 public class CreateUserCommandHandlerTests
 {
+    private static readonly Guid UserRoleId = Guid.NewGuid();
+    private static readonly Guid AdminRoleId = Guid.NewGuid();
+    private static readonly Guid InvalidRoleId = Guid.NewGuid();
+
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
+    private readonly IRoleRepository _roleRepository = Substitute.For<IRoleRepository>();
     private readonly IPasswordHasher _passwordHasher = Substitute.For<IPasswordHasher>();
     private readonly ILogger<CreateUserCommandHandler> _logger = Substitute.For<ILogger<CreateUserCommandHandler>>();
     private readonly CreateUserCommandHandler _sut;
 
     public CreateUserCommandHandlerTests()
     {
-        _sut = new CreateUserCommandHandler(_userRepository, _passwordHasher, _logger);
+        _sut = new CreateUserCommandHandler(_userRepository, _roleRepository, _passwordHasher, _logger);
+
+        var userRole = Role.Create("Vendedor", "Rol de vendedor");
+        var adminRole = Role.Create("Administrador", "Rol de administrador");
+        _roleRepository.GetByIdAsync(UserRoleId, Arg.Any<CancellationToken>()).Returns(userRole);
+        _roleRepository.GetByIdAsync(AdminRoleId, Arg.Any<CancellationToken>()).Returns(adminRole);
+        _roleRepository.GetByIdAsync(InvalidRoleId, Arg.Any<CancellationToken>()).Returns((Role?)null);
     }
 
     [Fact]
     public async Task Handle_WithValidData_ReturnsSuccessWithUserId()
     {
         // Arrange
-        var command = new CreateUserCommand("John", "Doe", "john@test.com", "Password123!", "User");
+        var command = new CreateUserCommand("John", "Doe", "john@test.com", "Password123!", UserRoleId);
         var expectedId = Guid.NewGuid();
 
         _userRepository.ExistsByEmailAsync(command.Email, Arg.Any<CancellationToken>())
@@ -47,7 +57,7 @@ public class CreateUserCommandHandlerTests
     public async Task Handle_WithDuplicateEmail_ReturnsFailure()
     {
         // Arrange
-        var command = new CreateUserCommand("John", "Doe", "existing@test.com", "Password123!", "User");
+        var command = new CreateUserCommand("John", "Doe", "existing@test.com", "Password123!", UserRoleId);
 
         _userRepository.ExistsByEmailAsync(command.Email, Arg.Any<CancellationToken>())
             .Returns(true);
@@ -64,7 +74,7 @@ public class CreateUserCommandHandlerTests
     public async Task Handle_WithInvalidRole_ReturnsFailure()
     {
         // Arrange
-        var command = new CreateUserCommand("John", "Doe", "john@test.com", "Password123!", "InvalidRole");
+        var command = new CreateUserCommand("John", "Doe", "john@test.com", "Password123!", InvalidRoleId);
 
         _userRepository.ExistsByEmailAsync(command.Email, Arg.Any<CancellationToken>())
             .Returns(false);
@@ -78,10 +88,10 @@ public class CreateUserCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithAdminRole_CreatesUserWithAdminRole()
+    public async Task Handle_WithAdminRole_CreatesUserWithAdminRoleId()
     {
         // Arrange
-        var command = new CreateUserCommand("Admin", "User", "admin@test.com", "Password123!", "Admin");
+        var command = new CreateUserCommand("Admin", "User", "admin@test.com", "Password123!", AdminRoleId);
 
         _userRepository.ExistsByEmailAsync(command.Email, Arg.Any<CancellationToken>())
             .Returns(false);
@@ -96,7 +106,7 @@ public class CreateUserCommandHandlerTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         await _userRepository.Received(1).InsertAsync(
-            Arg.Is<User>(u => u.Role == UserRole.Admin),
+            Arg.Is<User>(u => u.RoleId == AdminRoleId),
             Arg.Any<CancellationToken>());
     }
 
@@ -104,7 +114,7 @@ public class CreateUserCommandHandlerTests
     public async Task Handle_CallsPasswordHasher_WithProvidedPassword()
     {
         // Arrange
-        var command = new CreateUserCommand("John", "Doe", "john@test.com", "MyPassword!", "User");
+        var command = new CreateUserCommand("John", "Doe", "john@test.com", "MyPassword!", UserRoleId);
 
         _userRepository.ExistsByEmailAsync(command.Email, Arg.Any<CancellationToken>())
             .Returns(false);
@@ -124,7 +134,7 @@ public class CreateUserCommandHandlerTests
     public async Task Handle_WhenEmailExists_DoesNotCallInsert()
     {
         // Arrange
-        var command = new CreateUserCommand("John", "Doe", "existing@test.com", "Password123!", "User");
+        var command = new CreateUserCommand("John", "Doe", "existing@test.com", "Password123!", UserRoleId);
 
         _userRepository.ExistsByEmailAsync(command.Email, Arg.Any<CancellationToken>())
             .Returns(true);

@@ -1,6 +1,5 @@
 using CRM.Application.Common.Models;
 using CRM.Domain.Entities;
-using CRM.Domain.Enums;
 using CRM.Domain.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -9,6 +8,7 @@ namespace CRM.Application.Features.Users.Commands.UpdateUser;
 
 public sealed class UpdateUserCommandHandler(
     IUserRepository userRepository,
+    IRoleRepository roleRepository,
     ILogger<UpdateUserCommandHandler> logger
 ) : IRequestHandler<UpdateUserCommand, Result<bool>>
 {
@@ -20,18 +20,19 @@ public sealed class UpdateUserCommandHandler(
             return Result<bool>.Failure("El usuario no fue encontrado.");
         }
 
-        if (!Enum.TryParse<UserRole>(request.Role, out var newRole))
+        var newRole = await roleRepository.GetByIdAsync(request.RoleId, cancellationToken);
+        if (newRole is null)
         {
-            return Result<bool>.Failure("El rol especificado no es válido.");
+            return Result<bool>.Failure("El rol especificado no existe.");
         }
 
         var emailValidation = await ValidateEmailChangeAsync(user, request.Email, cancellationToken);
         if (emailValidation is not null) return emailValidation;
 
-        var adminValidation = await ValidateAdminProtectionAsync(user, newRole, request.IsActive, cancellationToken);
+        var adminValidation = await ValidateAdminProtectionAsync(user, request.RoleId, request.IsActive, cancellationToken);
         if (adminValidation is not null) return adminValidation;
 
-        ApplyChanges(user, request, newRole);
+        ApplyChanges(user, request);
 
         await userRepository.UpdateAsync(user, cancellationToken);
 
@@ -51,12 +52,13 @@ public sealed class UpdateUserCommandHandler(
             : null;
     }
 
-    private async Task<Result<bool>?> ValidateAdminProtectionAsync(User user, UserRole newRole, bool isActive, CancellationToken ct)
+    private async Task<Result<bool>?> ValidateAdminProtectionAsync(User user, Guid newRoleId, bool isActive, CancellationToken ct)
     {
-        if (user.Role != UserRole.Admin) return null;
+        // Check if user is currently an admin (by role name from SP join)
+        if (!string.Equals(user.RoleName, "Administrador", StringComparison.OrdinalIgnoreCase)) return null;
 
         var isDeactivating = user.IsActive && !isActive;
-        var isRemovingAdmin = newRole != UserRole.Admin;
+        var isRemovingAdmin = user.RoleId != newRoleId;
 
         if (!isDeactivating && !isRemovingAdmin) return null;
 
@@ -66,11 +68,11 @@ public sealed class UpdateUserCommandHandler(
             : null;
     }
 
-    private static void ApplyChanges(User user, UpdateUserCommand request, UserRole newRole)
+    private static void ApplyChanges(User user, UpdateUserCommand request)
     {
         user.UpdateProfile(request.FirstName, request.LastName);
         user.UpdateEmail(request.Email);
-        user.ChangeRole(newRole);
+        user.ChangeRole(request.RoleId);
 
         if (request.IsActive && !user.IsActive) user.Activate();
         else if (!request.IsActive && user.IsActive) user.Deactivate();

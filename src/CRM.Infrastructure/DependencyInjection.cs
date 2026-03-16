@@ -23,6 +23,8 @@ public static class DependencyInjection
         // Persistence
         services.AddSingleton<IDbConnectionFactory, SqlConnectionFactory>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IPermissionRepository, PermissionRepository>();
 
         // Identity
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();

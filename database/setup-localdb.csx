@@ -57,5 +57,17 @@ var script4 = File.ReadAllText(Path.Combine(scriptDir, "04-create-user-managemen
 ExecuteBatches(crmConn, script4);
 Console.WriteLine("   OK");
 
+// Step 5: Create RBAC tables and stored procedures
+Console.WriteLine("5. Creating RBAC tables, roles, permissions...");
+var script5 = File.ReadAllText(Path.Combine(scriptDir, "05-create-rbac.sql"));
+ExecuteBatches(crmConn, script5);
+Console.WriteLine("   OK");
+
+// Step 6: Migrate Users.Role to Users.RoleId (FK)
+Console.WriteLine("6. Migrating Users.Role to Users.RoleId (FK)...");
+var script6 = File.ReadAllText(Path.Combine(scriptDir, "06-migrate-user-role-to-fk.sql"));
+ExecuteBatches(crmConn, script6);
+Console.WriteLine("   OK");
+
 Console.WriteLine("\nDatabase CRM_DB setup completed successfully!");
 Console.WriteLine("Connection: (localdb)\\MSSQLLocalDB");

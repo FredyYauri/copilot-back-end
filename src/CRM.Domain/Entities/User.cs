@@ -1,5 +1,3 @@
-using CRM.Domain.Enums;
-
 namespace CRM.Domain.Entities;
 
 public class User : AuditableEntity
@@ -8,12 +6,13 @@ public class User : AuditableEntity
     public string LastName { get; private set; } = default!;
     public string Email { get; private set; } = default!;
     public string PasswordHash { get; private set; } = default!;
-    public UserRole Role { get; private set; }
+    public Guid RoleId { get; private set; }
+    public string RoleName { get; private set; } = default!;
     public bool IsActive { get; private set; }
 
     private User() { }
 
-    public static User Create(string firstName, string lastName, string email, string passwordHash, UserRole role = UserRole.User)
+    public static User Create(string firstName, string lastName, string email, string passwordHash, Guid roleId)
     {
         return new User
         {
@@ -22,7 +21,7 @@ public class User : AuditableEntity
             LastName = lastName ?? throw new ArgumentNullException(nameof(lastName)),
             Email = email ?? throw new ArgumentNullException(nameof(email)),
             PasswordHash = passwordHash,
-            Role = role,
+            RoleId = roleId,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
@@ -53,9 +52,9 @@ public class User : AuditableEntity
         LastModifiedAt = DateTime.UtcNow;
     }
 
-    public void ChangeRole(UserRole newRole)
+    public void ChangeRole(Guid newRoleId)
     {
-        Role = newRole;
+        RoleId = newRoleId;
         LastModifiedAt = DateTime.UtcNow;
     }
 
