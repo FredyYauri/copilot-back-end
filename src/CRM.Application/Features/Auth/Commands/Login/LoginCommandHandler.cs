@@ -9,6 +9,7 @@ namespace CRM.Application.Features.Auth.Commands.Login;
 
 public sealed class LoginCommandHandler(
     IUserRepository userRepository,
+    IPermissionRepository permissionRepository,
     IPasswordHasher passwordHasher,
     IJwtTokenGenerator jwtTokenGenerator,
     ILogger<LoginCommandHandler> logger
@@ -39,12 +40,15 @@ public sealed class LoginCommandHandler(
         var accessToken = jwtTokenGenerator.GenerateAccessToken(user);
         var refreshToken = jwtTokenGenerator.GenerateRefreshToken();
 
+        var permissions = await permissionRepository.GetPermissionCodesByUserIdAsync(user.Id, cancellationToken);
+
         var userDto = new UserDto(
             Id: user.Id.ToString(),
             Email: user.Email,
             FirstName: user.FirstName,
             LastName: user.LastName,
-            Role: user.RoleName
+            Role: user.RoleName,
+            Permissions: permissions
         );
 
         logger.LogInformation("User {UserId} logged in successfully", user.Id);

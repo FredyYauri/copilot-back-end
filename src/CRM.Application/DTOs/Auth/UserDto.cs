@@ -5,5 +5,6 @@ public sealed record UserDto(
     string Email,
     string FirstName,
     string LastName,
-    string Role
+    string Role,
+    IEnumerable<string> Permissions
 );

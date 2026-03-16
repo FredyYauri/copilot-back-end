@@ -16,6 +16,7 @@ public class LoginCommandHandlerTests
     private static readonly Guid DefaultRoleId = Guid.NewGuid();
 
     private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
+    private readonly IPermissionRepository _permissionRepository = Substitute.For<IPermissionRepository>();
     private readonly IPasswordHasher _passwordHasher = Substitute.For<IPasswordHasher>();
     private readonly IJwtTokenGenerator _jwtTokenGenerator = Substitute.For<IJwtTokenGenerator>();
     private readonly ILogger<LoginCommandHandler> _logger = Substitute.For<ILogger<LoginCommandHandler>>();
@@ -23,7 +24,7 @@ public class LoginCommandHandlerTests
 
     public LoginCommandHandlerTests()
     {
-        _sut = new LoginCommandHandler(_userRepository, _passwordHasher, _jwtTokenGenerator, _logger);
+        _sut = new LoginCommandHandler(_userRepository, _permissionRepository, _passwordHasher, _jwtTokenGenerator, _logger);
     }
 
     [Fact]
@@ -87,6 +88,7 @@ public class LoginCommandHandlerTests
         // Arrange
         var user = TestUserHelper.CreateWithRole("John", "Doe", "john@test.com", "hashedPwd", AdminRoleId, "Administrador");
         var command = new LoginCommand("john@test.com", "correctPassword");
+        var permissionCodes = new[] { "users.read", "users.create" };
 
         _userRepository.GetByEmailAsync(command.Email, Arg.Any<CancellationToken>())
             .Returns(user);
@@ -96,6 +98,8 @@ public class LoginCommandHandlerTests
             .Returns("access-token-123");
         _jwtTokenGenerator.GenerateRefreshToken()
             .Returns("refresh-token-456");
+        _permissionRepository.GetPermissionCodesByUserIdAsync(user.Id, Arg.Any<CancellationToken>())
+            .Returns(permissionCodes);
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
@@ -111,5 +115,6 @@ public class LoginCommandHandlerTests
         result.Value.User.LastName.Should().Be("Doe");
         result.Value.User.Role.Should().Be("Administrador");
         result.Value.User.Id.Should().Be(user.Id.ToString());
+        result.Value.User.Permissions.Should().BeEquivalentTo(permissionCodes);
     }
 }

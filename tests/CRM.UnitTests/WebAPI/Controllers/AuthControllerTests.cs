@@ -26,7 +26,7 @@ public class AuthControllerTests
     {
         // Arrange
         var request = new LoginRequestDto("john@test.com", "password123");
-        var userDto = new UserDto("id-1", "john@test.com", "John", "Doe", "User");
+        var userDto = new UserDto("id-1", "john@test.com", "John", "Doe", "User", []);
         var loginResponse = new LoginResponseDto("access-token", "refresh-token", userDto);
         var result = Result<LoginResponseDto>.Success(loginResponse);
 

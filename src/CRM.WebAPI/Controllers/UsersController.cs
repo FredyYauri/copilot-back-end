@@ -40,6 +40,8 @@ public class UsersController(ISender sender) : ControllerBase
     [TypeFilter(typeof(PermissionAuthorizationFilter), Arguments = new object[] { "users", "read" })]
     public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken ct = default)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 50);
         var result = await sender.Send(new GetUsersQuery(page, pageSize), ct);
         return Ok(result);
     }
