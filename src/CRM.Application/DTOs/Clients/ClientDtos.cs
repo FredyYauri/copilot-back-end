@@ -90,6 +90,19 @@ public sealed record UpdateClientRequestDto(
     CreateClientCommercialInfoDto? CommercialInfo
 );
 
+public sealed record UpdateClientContactsRequestDto(
+    IEnumerable<CreateClientContactDto> Contacts
+);
+
+public sealed record UpdateClientCommercialInfoRequestDto(
+    string? AsesorComercial,
+    string? CodigoAsesor,
+    string? MedioCaptacion,
+    string? CentralRiesgo,
+    decimal? LineaCredito,
+    string? Comentarios
+);
+
 public sealed record ClientSearchDto(
     string Id,
     string Nombre,

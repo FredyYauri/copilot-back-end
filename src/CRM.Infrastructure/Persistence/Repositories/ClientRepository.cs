@@ -98,6 +98,15 @@ public sealed class ClientRepository(IDbConnectionFactory connectionFactory) : I
             commandType: CommandType.StoredProcedure);
     }
 
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        using var connection = connectionFactory.CreateConnection();
+        await connection.ExecuteAsync(
+            "sp_Clients_Delete",
+            new { Id = id },
+            commandType: CommandType.StoredProcedure);
+    }
+
     public async Task<IEnumerable<ClientContact>> GetContactsByClientIdAsync(Guid clientId, CancellationToken ct = default)
     {
         using var connection = connectionFactory.CreateConnection();

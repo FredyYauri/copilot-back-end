@@ -11,6 +11,7 @@ public interface IClientRepository
     Task<bool> ExistsByDniAsync(string dni, CancellationToken ct = default);
     Task<Guid> InsertAsync(Client client, CancellationToken ct = default);
     Task UpdateAsync(Client client, CancellationToken ct = default);
+    Task DeleteAsync(Guid id, CancellationToken ct = default);
 
     Task<IEnumerable<ClientContact>> GetContactsByClientIdAsync(Guid clientId, CancellationToken ct = default);
     Task<Guid> InsertContactAsync(ClientContact contact, CancellationToken ct = default);

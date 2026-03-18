@@ -1,7 +1,10 @@
 using CRM.Application.Common.Models;
 using CRM.Application.DTOs.Clients;
 using CRM.Application.Features.Clients.Commands.CreateClient;
+using CRM.Application.Features.Clients.Commands.DeleteClient;
 using CRM.Application.Features.Clients.Commands.UpdateClient;
+using CRM.Application.Features.Clients.Commands.UpdateClientContacts;
+using CRM.Application.Features.Clients.Commands.UpdateClientCommercialInfo;
 using CRM.Application.Features.Clients.Queries.GetClientById;
 using CRM.Application.Features.Clients.Queries.GetClients;
 using CRM.Application.Features.Clients.Queries.SearchClients;
@@ -179,6 +182,86 @@ public class ClientsController(ISender sender) : ControllerBase
     }
 
     /// <summary>
+    /// Actualiza los contactos de un cliente existente.
+    /// </summary>
+    /// <param name="id">Identificador del cliente.</param>
+    /// <param name="request">Lista de contactos actualizada.</param>
+    /// <param name="ct">Token de cancelación.</param>
+    /// <returns>Confirmación de actualización.</returns>
+    /// <response code="204">Contactos actualizados exitosamente.</response>
+    /// <response code="400">Datos de contactos inválidos.</response>
+    /// <response code="404">Cliente no encontrado.</response>
+    [HttpPut("{id:guid}/contacts")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [TypeFilter(typeof(PermissionAuthorizationFilter), Arguments = new object[] { "clients", "update" })]
+    public async Task<IActionResult> UpdateContacts(Guid id, [FromBody] UpdateClientContactsRequestDto request, CancellationToken ct)
+    {
+        var command = new UpdateClientContactsCommand(
+            id,
+            request.Contacts.Select(c => new CreateClientContactItem(
+                c.Nombre, c.Cargo, c.Telefono, c.Correo, c.Comentarios))
+        );
+
+        var result = await sender.Send(command, ct);
+
+        if (!result.IsSuccess)
+        {
+            return NotFound(new ProblemDetails
+            {
+                Title = "Update contacts failed",
+                Detail = result.Error,
+                Status = StatusCodes.Status404NotFound
+            });
+        }
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Actualiza la información comercial de un cliente existente.
+    /// </summary>
+    /// <param name="id">Identificador del cliente.</param>
+    /// <param name="request">Datos de información comercial actualizados.</param>
+    /// <param name="ct">Token de cancelación.</param>
+    /// <returns>Confirmación de actualización.</returns>
+    /// <response code="204">Información comercial actualizada exitosamente.</response>
+    /// <response code="400">Datos inválidos.</response>
+    /// <response code="404">Cliente no encontrado.</response>
+    [HttpPut("{id:guid}/commercial-info")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [TypeFilter(typeof(PermissionAuthorizationFilter), Arguments = new object[] { "clients", "update" })]
+    public async Task<IActionResult> UpdateCommercialInfo(Guid id, [FromBody] UpdateClientCommercialInfoRequestDto request, CancellationToken ct)
+    {
+        var command = new UpdateClientCommercialInfoCommand(
+            id,
+            request.AsesorComercial,
+            request.CodigoAsesor,
+            request.MedioCaptacion,
+            request.CentralRiesgo,
+            request.LineaCredito,
+            request.Comentarios
+        );
+
+        var result = await sender.Send(command, ct);
+
+        if (!result.IsSuccess)
+        {
+            return NotFound(new ProblemDetails
+            {
+                Title = "Update commercial info failed",
+                Detail = result.Error,
+                Status = StatusCodes.Status404NotFound
+            });
+        }
+
+        return NoContent();
+    }
+
+    /// <summary>
     /// Busca clientes por nombre, RUC o DNI (autocompletado).
     /// </summary>
     /// <param name="q">Término de búsqueda.</param>
@@ -199,5 +282,34 @@ public class ClientsController(ISender sender) : ControllerBase
         maxResults = Math.Clamp(maxResults, 1, 50);
         var result = await sender.Send(new SearchClientsQuery(q, maxResults), ct);
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Elimina un cliente (soft delete).
+    /// </summary>
+    /// <param name="id">Identificador del cliente.</param>
+    /// <param name="ct">Token de cancelación.</param>
+    /// <returns>Confirmación de eliminación.</returns>
+    /// <response code="204">Cliente eliminado exitosamente.</response>
+    /// <response code="404">Cliente no encontrado.</response>
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [TypeFilter(typeof(PermissionAuthorizationFilter), Arguments = new object[] { "clients", "delete" })]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new DeleteClientCommand(id), ct);
+
+        if (!result.IsSuccess)
+        {
+            return NotFound(new ProblemDetails
+            {
+                Title = "Delete client failed",
+                Detail = result.Error,
+                Status = StatusCodes.Status404NotFound
+            });
+        }
+
+        return NoContent();
     }
 }
